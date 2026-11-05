@@ -26,4 +26,15 @@ export async function connectDB() {
   await client.connect();
   await db.command({ ping: 1 });
   console.log("Connected to MongoDB");
+  await ensureIndexes();
+}
+
+async function ensureIndexes() {
+  await Promise.all([
+    booksCollection.createIndex({ createdAt: -1 }),
+    booksCollection.createIndex({ "addedBy.email": 1 }),
+    borrowsCollection.createIndex({ userEmail: 1, borrowDate: -1 }),
+    // One active borrow per user per book (backs up the "no double borrow" rule)
+    borrowsCollection.createIndex({ bookId: 1, userEmail: 1 }, { unique: true }),
+  ]);
 }
